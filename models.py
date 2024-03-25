@@ -1,3 +1,6 @@
+from pydantic import Field, BaseModel
+
+
 class S3Record:
     """Instantiated record from an S3 Event"""
 
@@ -14,3 +17,8 @@ class SQSRecord:
         self.message_id = event["Records"][0]["messageId"]
         self.body = event["Records"][0]["body"]
         self.event_source = event["Records"][0]["eventSource"]
+
+
+class ModelEvalMessage(BaseModel):
+    endpointName: str = Field()
+    testDataS3Location: str = Field()
