@@ -1,18 +1,17 @@
-# AWS Lambda Function Template
+# AWS Lambda Model Evaluation
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3121/)
 <a href="https://github.com/new?template_name=aws-lambda-function-template&template_owner=kwame-mintah">
   <img src="https://img.shields.io/badge/use%20this-template-blue?logo=github">
 </a>
 
-This is a template project for a AWS Lambda function deployed as a docker image.
+A lambda to invoke an AWS SageMaker model endpoint with test data stored within an S3 Bucket. For analyzing a dataset to
+generate baseline constraints. Allowing for monitoring machine learning (ML) model quality to determine if new model
+predictions are accurate or not, additionally detect changes in properties
 
-This repository is intended as a quick-start and includes the following:
-
-- A `Dockerfile` to build the lambda function
-- GitHub Actions to build and push the image to an AWS Elastic Container Registry (ECR)
-- Pre-commit hooks to run on each commit
-- Example unit and feature tests
+This repository does not create the AWS Simple Queue Service, this is created via Terraform found here [terraform-aws-machine-learning-pipeline](https://github.com/kwame-mintah/terraform-aws-machine-learning-pipeline).
+Additionally, data uploaded for ML purposes can be found here [ml-data-copy-to-aws-s3](https://github.com/kwame-mintah/ml-data-copy-to-aws-s3).
+For more details on the entire flow and how this lambda is deployed, see [aws-automlops-serverless-deployment](https://github.com/kwame-mintah/aws-automlops-serverless-deployment).
 
 ## Development
 
@@ -41,43 +40,31 @@ This repository is intended as a quick-start and includes the following:
    curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{<REPLACE_WITH_JSON_BELOW>}'
    ```
    ```json
-   {
-     "Records": [
-       {
-         "eventVersion": "2.0",
-         "eventSource": "aws:s3",
-         "awsRegion": "us-east-1",
-         "eventTime": "1970-01-01T00:00:00.000Z",
-         "eventName": "ObjectCreated:Put",
-         "userIdentity": { "principalId": "EXAMPLE" },
-         "requestParameters": { "sourceIPAddress": "127.0.0.1" },
-         "responseElements": {
-           "x-amz-request-id": "EXAMPLE123456789",
-           "x-amz-id-2": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH"
-         },
-         "s3": {
-           "s3SchemaVersion": "1.0",
-           "configurationId": "testConfigRule",
-           "bucket": {
-             "name": "example-bucket",
-             "ownerIdentity": { "principalId": "EXAMPLE" },
-             "arn": "arn:aws:s3:::example-bucket"
-           },
-           "object": {
-             "key": "test%2Fkey",
-             "size": 1024,
-             "eTag": "0123456789abcdef0123456789abcdef",
-             "sequencer": "0A1B2C3D4E5F678901"
-           }
-         }
-       }
-     ]
-   }
+    {
+      "Records": [
+        {
+          "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
+          "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS3SLy0a...",
+          "body": "{\"endpointName\": \"example\", \"testDataS3Location\" : \"s3//\"}",
+          "attributes": {
+            "ApproximateReceiveCount": "1",
+            "SentTimestamp": "1545082649183",
+            "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+            "ApproximateFirstReceiveTimestamp": "1545082649185"
+          },
+          "messageAttributes": {},
+          "md5OfBody": "098f6bcd4621d373cade4e832627b4f6",
+          "eventSource": "aws:sqs",
+          "eventSourceARN": "arn:aws:sqs:us-east-1:111122223333:my-queue",
+          "awsRegion": "us-east-1"
+        }
+      ]
+    }
    ```
 
 ## GitHub Action (CI/CD)
 
-The GitHub Action "🚀 Push Docker image to AWS ECR" will checkout the repository and push a docker image to the chosen AWS ECR using
+The GitHub Action "🚀 Push Docker image to AWS ECR" will check out the repository and push a docker image to the chosen AWS ECR using
 [configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials/tree/v4.0.1/) action. The following repository secrets need to be set:
 
 | Secret             | Description                  |
