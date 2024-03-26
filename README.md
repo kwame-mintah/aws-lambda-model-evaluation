@@ -1,9 +1,10 @@
 # AWS Lambda Model Evaluation
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3121/)
-<a href="https://github.com/new?template_name=aws-lambda-function-template&template_owner=kwame-mintah">
-  <img src="https://img.shields.io/badge/use%20this-template-blue?logo=github">
-</a>
+[![🚧 Bump version](https://github.com/kwame-mintah/aws-lambda-model-evaluation/actions/workflows/bump-repository-version.yml/badge.svg)](https://github.com/kwame-mintah/aws-lambda-model-evaluation/actions/workflows/bump-repository-version.yml)
+[![🚀 Push Docker image to AWS ECR](https://github.com/kwame-mintah/aws-lambda-model-evaluation/actions/workflows/push-docker-image-to-aws-ecr.yml/badge.svg)](https://github.com/kwame-mintah/aws-lambda-model-evaluation/actions/workflows/push-docker-image-to-aws-ecr.yml)
+[![🧹 Run linter](https://github.com/kwame-mintah/aws-lambda-model-evaluation/actions/workflows/run-python-linter.yml/badge.svg)](https://github.com/kwame-mintah/aws-lambda-model-evaluation/actions/workflows/run-python-linter.yml)
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 A lambda to invoke an AWS SageMaker model endpoint with test data stored within an S3 Bucket. For analyzing a dataset to
 generate baseline constraints. Allowing for monitoring machine learning (ML) model quality to determine if new model
@@ -45,7 +46,7 @@ For more details on the entire flow and how this lambda is deployed, see [aws-au
         {
           "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
           "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS3SLy0a...",
-          "body": "{\"endpointName\": \"example\", \"testDataS3Location\" : \"s3//\"}",
+          "body": "{\"endpointName\": \"example\", \"testDataS3BucketName\": \"example-bucket\", \"testDataS3Key\" : \"test-data.csv\"}",
           "attributes": {
             "ApproximateReceiveCount": "1",
             "SentTimestamp": "1545082649183",
@@ -68,7 +69,7 @@ The GitHub Action "🚀 Push Docker image to AWS ECR" will check out the reposit
 [configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials/tree/v4.0.1/) action. The following repository secrets need to be set:
 
 | Secret             | Description                  |
-| ------------------ | ---------------------------- |
+|--------------------|------------------------------|
 | AWS_REGION         | The AWS Region.              |
 | AWS_ACCOUNT_ID     | The AWS account ID.          |
 | AWS_ECR_REPOSITORY | The AWS ECR repository name. |
