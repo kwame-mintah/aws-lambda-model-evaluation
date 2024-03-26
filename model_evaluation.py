@@ -17,9 +17,6 @@ s3_client = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-west
 logger = logging.getLogger("model-evaluation")
 logger.setLevel(logging.INFO)
 
-# The output bucket name
-PREPROCESSED_OUTPUT_BUCKET_NAME = os.environ.get("PREPROCESSED_OUTPUT_BUCKET_NAME")
-
 
 def lambda_handler(event, context):
     """
@@ -35,6 +32,8 @@ def lambda_handler(event, context):
 
     message = ModelEvalMessage(**json.loads(sqs_record.body))
 
+    # Create predictor object for making predictions against endpoint
+    # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#predictors
     predictor = Predictor(
         endpoint_name=message.endpointName,
         serializer=sagemaker.serializers.CSVSerializer(),
@@ -45,25 +44,33 @@ def lambda_handler(event, context):
         message.endpointName,
     )
 
-    # TODO: Read CSV from S3 Bucket
-    with open("test_data/test_sample.csv", "r") as f:
-        for row in f:
-            payload = row.rstrip("\n")
-            response = predictor.predict(data=payload)
-            time.sleep(0.5)
+    # Retrieve test data for the model endpoint
+    csv_rows = retrieve_object_from_bucket(
+        bucket_name=message.testDataS3BucketName, key=message.testDataS3Key
+    )
+
+    # Loop through each row in the file and use as a payload to the endpoint
+    # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#sagemaker.predictor.Predictor.predict
+    for row in csv_rows:
+        payload = row.rstrip("\n")
+        predictor.predict(data=payload)
+        time.sleep(0.5)
 
     logger.info("Done!")
 
     return event
 
 
-def retrieve_object_from_bucket(key: str, client: Any = s3_client) -> bytes:
+def retrieve_object_from_bucket(
+    bucket_name: str, key: str, client: Any = s3_client
+) -> bytes:
     """
     Get the csv file from the bucket and return as bytes.
 
+    :param bucket_name: The bucket name containing the object.
+    :param key: Key of the object to get.
     :param client: boto3 client configured to use s3
-    :param key: The full path to object
     :return: bytes from the stream
     """
-    s3_object = client.get_object(Bucket=PREPROCESSED_OUTPUT_BUCKET_NAME, Key=key)
+    s3_object = client.get_object(Bucket=bucket_name, Key=key)
     return s3_object["Body"].read().decode("utf-8")

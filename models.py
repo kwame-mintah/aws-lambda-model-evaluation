@@ -19,6 +19,8 @@ class SQSRecord:
         self.event_source = event["Records"][0]["eventSource"]
 
 
+# https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.FieldInfo
 class ModelEvalMessage(BaseModel):
-    endpointName: str = Field()
-    testDataS3Location: str = Field()
+    endpointName: str = Field(title="AWS SageMaker endpoint created")
+    testDataS3BucketName: str = Field(title="AWS S3 Bucket name contain test data")
+    testDataS3Key: str = Field(title="Full path of object within AWS S3 Bucket")
