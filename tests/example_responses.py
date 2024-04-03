@@ -1,5 +1,4 @@
 from datetime import datetime
-from io import FileIO
 
 from botocore.awsrequest import HeadersDict
 from botocore.response import StreamingBody
