@@ -14,6 +14,27 @@ This repository does not create the AWS Simple Queue Service, this is created vi
 Additionally, data uploaded for ML purposes can be found here [ml-data-copy-to-aws-s3](https://github.com/kwame-mintah/ml-data-copy-to-aws-s3).
 For more details on the entire flow and how this lambda is deployed, see [aws-automlops-serverless-deployment](https://github.com/kwame-mintah/aws-automlops-serverless-deployment).
 
+# Flowchart
+
+The [diagram below](https://mermaid.js.org/syntax/flowchart.html#flowcharts-basic-syntax) demonstrates what happens when
+the lambda is trigger, when a new message is placed on the SQS.
+
+```mermaid
+graph LR
+  S0(Start)
+  T1(Check endpoint is available)
+  T2(Configure Predictor for endpoint)
+  T3(Pull test dataset from S3 Bucket)
+  T4(Use test data as payload for invoking endpoint)
+  E0(End)
+
+  S0-->T1
+  T1-->T2
+  T2-->T3
+  T3-->T4
+  T4-->E0
+```
+
 ## Development
 
 ### Dependencies
