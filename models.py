@@ -21,6 +21,15 @@ class SQSRecord:
 
 # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.FieldInfo
 class ModelEvalMessage(BaseModel):
-    endpointName: str = Field(title="AWS SageMaker endpoint created")
-    testDataS3BucketName: str = Field(title="AWS S3 Bucket name contain test data")
-    testDataS3Key: str = Field(title="Full path of object within AWS S3 Bucket")
+    """Message received by lambda function, including location of test data."""
+
+    endpointName: str = Field(
+        title="AWS SageMaker endpoint created",
+        examples=["tensorflow-training-2023-11-16-20-52-24-381"],
+    )
+    testDataS3BucketName: str = Field(
+        title="AWS S3 Bucket name contain test data", examples=["bucket-name"]
+    )
+    testDataS3Key: str = Field(
+        title="Full path of object within AWS S3 Bucket", examples=["test-data.csv"]
+    )
