@@ -1,3 +1,9 @@
+## 0.4.1 (2024-05-12)
+
+### Refactor
+
+- **s3_client**: include arg name of `service_name`
+
 ## 0.4.0 (2024-05-12)
 
 ### Feat
