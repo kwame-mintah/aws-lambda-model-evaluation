@@ -10,8 +10,14 @@ from sagemaker.predictor import Predictor
 
 from models import SQSRecord, ModelEvalMessage
 
+# The AWS region
+aws_region = os.environ.get("AWS_REGION", "eu-west-2")
+
 # Configure S3 client
-s3_client = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "eu-west-2"))
+s3_client = boto3.client("s3", region_name=aws_region)
+
+# Configure SageMaker client
+sagemaker_client = boto3.client(service_name="sagemaker", region_name=aws_region)
 
 # Configure logging
 logger = logging.getLogger("model-evaluation")
@@ -59,6 +65,40 @@ def lambda_handler(event, context):
     logger.info("Done!")
 
     return event
+
+
+def wait_endpoint_status_in_service(
+    endpoint_name: str, boto_client: Any = sagemaker_client
+) -> str:
+    """
+    Wait for endpoint to reach a terminal state (InService) using describe endpoint
+
+    :param endpoint_name: Endpoint to query
+    :param boto_client: boto3 SageMaker client
+    """
+    describe_endpoint_response = boto_client.describe_endpoint(
+        EndpointName=endpoint_name
+    )
+    # Possible statuses returned:
+    # 'EndpointStatus': 'OutOfService'|'Creating'|'Updating'|'SystemUpdating'|'RollingBack'|'InService'
+    # |'Deleting'|'Failed'|'UpdateRollbackFailed'
+
+    while describe_endpoint_response["EndpointStatus"] == "Creating":
+        describe_endpoint_response = boto_client.describe_endpoint(
+            EndpointName=endpoint_name
+        )
+        logger.info(
+            "Waiting for endpoint: %s to be in InService, currently in: %s",
+            endpoint_name,
+            describe_endpoint_response["EndpointStatus"],
+        )
+        time.sleep(15)
+    logger.info(
+        "Endpoint: %s, status is currently: %s",
+        endpoint_name,
+        describe_endpoint_response["EndpointStatus"],
+    )
+    return describe_endpoint_response["EndpointStatus"]
 
 
 def retrieve_object_from_bucket(
