@@ -1,3 +1,14 @@
+## 0.4.0 (2024-05-12)
+
+### Feat
+
+- **lambda_handler**: include checking of endpoint status
+- **wait_endpoint_status_in_service**: check endpoint is inservice before invoking requests
+
+### Refactor
+
+- **models**: add examples for modelevalmessage
+
 ## 0.3.0 (2024-04-07)
 
 ### Feat
