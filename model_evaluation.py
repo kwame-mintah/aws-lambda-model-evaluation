@@ -38,6 +38,15 @@ def lambda_handler(event, context):
 
     message = ModelEvalMessage(**json.loads(sqs_record.body))
 
+    if (
+        wait_endpoint_status_in_service(endpoint_name=message.endpointName)
+        != "InService"
+    ):
+        logger.warning(
+            "Endpoint failed to deployed, will not invoke endpoint with test data."
+        )
+        return
+
     # Create predictor object for making predictions against endpoint
     # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#predictors
     predictor = Predictor(
@@ -46,7 +55,7 @@ def lambda_handler(event, context):
     )
 
     logger.info(
-        "Sending test traffic to the endpoint %s. \nPlease wait...",
+        "Sending test data traffic to the endpoint %s. \nPlease wait...",
         message.endpointName,
     )
 
@@ -62,8 +71,9 @@ def lambda_handler(event, context):
         predictor.predict(data=payload)
         time.sleep(0.5)
 
-    logger.info("Done!")
-
+    logger.info(
+        "Completed invoking endpoint with test data, please see model monitoring bucket output"
+    )
     return event
 
 
