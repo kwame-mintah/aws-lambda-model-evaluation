@@ -14,7 +14,7 @@ from models import SQSRecord, ModelEvalMessage
 aws_region = os.environ.get("AWS_REGION", "eu-west-2")
 
 # Configure S3 client
-s3_client = boto3.client("s3", region_name=aws_region)
+s3_client = boto3.client(service_name="s3", region_name=aws_region)
 
 # Configure SageMaker client
 sagemaker_client = boto3.client(service_name="sagemaker", region_name=aws_region)
