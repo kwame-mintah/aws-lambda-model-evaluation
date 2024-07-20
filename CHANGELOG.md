@@ -1,3 +1,9 @@
+## 0.4.2 (2024-07-20)
+
+### Refactor
+
+- **csv_rows**: properly split rows to be used for prediction
+
 ## 0.4.1 (2024-05-12)
 
 ### Refactor
