@@ -7,8 +7,9 @@
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 A lambda to invoke an AWS SageMaker model endpoint with test data stored within an S3 Bucket. For analyzing a dataset to
-generate baseline constraints. Allowing for monitoring machine learning (ML) model quality to determine if new model
-predictions are accurate or not, additionally detect changes in properties
+[generate baseline constraints](https://sagemaker.readthedocs.io/en/stable/amazon_sagemaker_model_monitoring.html).
+Allowing for monitoring machine learning (ML) model quality to determine if new model predictions are accurate or not,
+additionally detect changes in properties.
 
 This repository does not create the AWS Simple Queue Service, this is created via Terraform found here [terraform-aws-machine-learning-pipeline](https://github.com/kwame-mintah/terraform-aws-machine-learning-pipeline).
 Additionally, data uploaded for ML purposes can be found here [ml-data-copy-to-aws-s3](https://github.com/kwame-mintah/ml-data-copy-to-aws-s3).
