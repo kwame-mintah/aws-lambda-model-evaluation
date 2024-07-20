@@ -49,26 +49,29 @@ def lambda_handler(event, context):
 
     # Create predictor object for making predictions against endpoint
     # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#predictors
+    sagemaker_session = sagemaker.Session()
     predictor = Predictor(
         endpoint_name=message.endpointName,
+        sagemaker_session=sagemaker_session,
         serializer=sagemaker.serializers.CSVSerializer(),
     )
 
-    logger.info(
-        "Sending test data traffic to the endpoint %s. \nPlease wait...",
-        message.endpointName,
-    )
-
-    # Retrieve test data for the model endpoint
+    # Retrieve test data for the model endpoint and split into rows
     csv_rows = retrieve_object_from_bucket(
         bucket_name=message.testDataS3BucketName, key=message.testDataS3Key
-    )
+    ).splitlines()
 
+    logger.info("Will use {rows} rows for prediction(s)".format(rows=len(csv_rows)))
+
+    logger.info(
+        "Sending test data to the endpoint %s. \nPlease wait...",
+        message.endpointName,
+    )
     # Loop through each row in the file and use as a payload to the endpoint
     # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#sagemaker.predictor.Predictor.predict
     for row in csv_rows:
         payload = row.rstrip("\n")
-        predictor.predict(data=payload)
+        predictor.predict(data=payload).decode("utf-8")
         time.sleep(0.5)
 
     logger.info(
