@@ -1,3 +1,9 @@
+## 0.5.0 (2024-07-21)
+
+### Feat
+
+- **perform_predictions**: perform batch predictions against model
+
 ## 0.4.2 (2024-07-20)
 
 ### Refactor
