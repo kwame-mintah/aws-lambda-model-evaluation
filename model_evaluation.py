@@ -2,9 +2,12 @@ import json
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Any
 
 import boto3
+import numpy as np
+import pandas as pd
 import sagemaker
 from sagemaker.predictor import Predictor
 
@@ -38,6 +41,7 @@ def lambda_handler(event, context):
 
     message = ModelEvalMessage(**json.loads(sqs_record.body))
 
+    # Check that the endpoint is ready to receive requests.
     if (
         wait_endpoint_status_in_service(endpoint_name=message.endpointName)
         != "InService"
@@ -56,26 +60,42 @@ def lambda_handler(event, context):
         serializer=sagemaker.serializers.CSVSerializer(),
     )
 
-    # Retrieve test data for the model endpoint and split into rows
-    csv_rows = retrieve_object_from_bucket(
-        bucket_name=message.testDataS3BucketName, key=message.testDataS3Key
-    ).splitlines()
+    # Read the test data CSV from the bucket and exclude the first column.
+    data = pd.read_csv(
+        filepath_or_buffer="s3://{bucket_name}/{bucket_key}".format(
+            bucket_name=message.testDataS3BucketName, bucket_key=message.testDataS3Key
+        ),
+        index_col=0,
+    )
 
-    logger.info("Will use {rows} rows for prediction(s)".format(rows=len(csv_rows)))
+    logger.info("Will use {rows} rows for prediction(s)".format(rows=data.shape[0]))
 
     logger.info(
         "Sending test data to the endpoint %s. \nPlease wait...",
         message.endpointName,
     )
-    # Loop through each row in the file and use as a payload to the endpoint
-    # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#sagemaker.predictor.Predictor.predict
-    for row in csv_rows:
-        payload = row.rstrip("\n")
-        predictor.predict(data=payload).decode("utf-8")
-        time.sleep(0.5)
+    predictions = perform_predictions(
+        data=data.drop(["y_no", "y_yes"], axis=1).to_numpy(), predictor=predictor
+    )
+
+    # Create confusion matrix to see how well the model predicted vs. actuals.
+    # Then save to S3 bucket to be reviewed later.
+    pd.crosstab(
+        index=data["y_yes"],
+        columns=np.round(predictions),
+        rownames=["actuals"],
+        colnames=["predictions"],
+    ).to_markdown(
+        buf="s3://{bucket_name}/{today}/predictions/{endpoint_name}/PREDICTIONS.md".format(
+            bucket_name=message.testDataS3BucketName,
+            today=str(datetime.now().strftime("%Y-%m-%d")),
+            endpoint_name=message.endpointName,
+        ),
+        tablefmt="grid",
+    )
 
     logger.info(
-        "Completed invoking endpoint with test data, please see model monitoring bucket output"
+        "Completed invoking endpoint with test data, please confusion matrix created for model"
     )
     return event
 
@@ -114,16 +134,22 @@ def wait_endpoint_status_in_service(
     return describe_endpoint_response["EndpointStatus"]
 
 
-def retrieve_object_from_bucket(
-    bucket_name: str, key: str, client: Any = s3_client
-) -> bytes:
+def perform_predictions(data: np.ndarray, predictor: Predictor, rows=500) -> np.ndarray:
     """
-    Get the csv file from the bucket and return as bytes.
+    Use test dataset and split into mini-batches of rows, converting these batches
+    into CSV string payloads, dropping the target variable from the dataset first.
+    Then invoke the endpoint for predictions.
 
-    :param bucket_name: The bucket name containing the object.
-    :param key: Key of the object to get.
-    :param client: boto3 client configured to use s3
-    :return: bytes from the stream
+    :param data: The test dataset used for invoking.
+    :param predictor: SageMaker Predictor object
+    :param rows: How to split the data
+    :return np.ndarray: collected predictions as a NumPy array
     """
-    s3_object = client.get_object(Bucket=bucket_name, Key=key)
-    return s3_object["Body"].read().decode("utf-8")
+    split_array = np.array_split(data, int(data.shape[0] / float(rows) + 1))
+    predictions = ""
+    # Loop through each row in the file and use as a payload to the endpoint
+    # https://sagemaker.readthedocs.io/en/stable/api/inference/predictors.html#sagemaker.predictor.Predictor.predict
+    for array in split_array:
+        predictions = ",".join([predictions, predictor.predict(array).decode("utf-8")])
+
+    return np.fromstring(predictions[1:], sep=",")
