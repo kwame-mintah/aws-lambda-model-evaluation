@@ -1,3 +1,9 @@
+## 0.6.0 (2024-08-01)
+
+### Feat
+
+- **get_parameter_store_value**: get model evaluation bucket name from paramater store
+
 ## 0.5.0 (2024-07-21)
 
 ### Feat
