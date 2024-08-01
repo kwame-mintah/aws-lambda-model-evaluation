@@ -1,9 +1,5 @@
 from datetime import datetime
 
-from botocore.awsrequest import HeadersDict
-from botocore.response import StreamingBody
-from urllib3 import HTTPResponse
-
 
 def example_sqs_event():
     """
@@ -30,57 +26,6 @@ def example_sqs_event():
                 "awsRegion": "us-east-1",
             }
         ]
-    }
-
-
-def example_get_object():
-    """
-    Example response of object from s3 bucket.
-    :return:
-    """
-    file = open("example_payload.csv", "rb")
-    return {
-        "Body": StreamingBody(
-            raw_stream=HTTPResponse(
-                body=file, status=200, headers=HeadersDict({"content-length": "236"})
-            ),
-            content_length=236,
-        ),
-        "DeleteMarker": True,
-        "AcceptRanges": "string",
-        "Expiration": "string",
-        "Restore": "string",
-        "LastModified": datetime(2015, 1, 1),
-        "ContentLength": 123,
-        "ETag": "string",
-        "ChecksumCRC32": "string",
-        "ChecksumCRC32C": "string",
-        "ChecksumSHA1": "string",
-        "ChecksumSHA256": "string",
-        "MissingMeta": 123,
-        "VersionId": "string",
-        "CacheControl": "string",
-        "ContentDisposition": "string",
-        "ContentEncoding": "string",
-        "ContentLanguage": "string",
-        "ContentRange": "string",
-        "ContentType": "string",
-        "Expires": datetime(2015, 1, 1),
-        "WebsiteRedirectLocation": "string",
-        "ServerSideEncryption": "AES256",
-        "Metadata": {"string": "string"},
-        "SSECustomerAlgorithm": "string",
-        "SSECustomerKeyMD5": "string",
-        "SSEKMSKeyId": "string",
-        "BucketKeyEnabled": True | False,
-        "StorageClass": "STANDARD",
-        "RequestCharged": "requester",
-        "ReplicationStatus": "COMPLETE",
-        "PartsCount": 123,
-        "TagCount": 123,
-        "ObjectLockMode": "GOVERNANCE",
-        "ObjectLockRetainUntilDate": datetime(2015, 1, 1),
-        "ObjectLockLegalHoldStatus": "ON",
     }
 
 
@@ -358,4 +303,24 @@ def example_describe_training_job_statuses(endpoint_status: str = "InService"):
                 "RoutingConfig": {"RoutingStrategy": "LEAST_OUTSTANDING_REQUESTS"},
             },
         ],
+    }
+
+
+def example_parameters_response():
+    """
+    Example response when retrieving parameter store value.
+    :return:
+    """
+    return {
+        "Parameter": {
+            "Name": "string",
+            "Type": "String",
+            "Value": "string",
+            "Version": 123,
+            "Selector": "string",
+            "SourceResult": "string",
+            "LastModifiedDate": datetime(2015, 1, 1),
+            "ARN": "string",
+            "DataType": "string",
+        }
     }
