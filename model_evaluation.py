@@ -22,9 +22,19 @@ s3_client = boto3.client(service_name="s3", region_name=aws_region)
 # Configure SageMaker client
 sagemaker_client = boto3.client(service_name="sagemaker", region_name=aws_region)
 
+# The environment the lambda is currently deployed in
+SERVERLESS_ENVIRONMENT = os.environ.get("SERVERLESS_ENVIRONMENT")
+
 # Configure logging
 logger = logging.getLogger("model-evaluation")
 logger.setLevel(logging.INFO)
+
+# The output bucket ssm parameter store name
+ssm_model_evaluation_output_bucket_name = (
+    "mlops-{region}-{environment}-model-monitoring".format(
+        region=aws_region, environment=SERVERLESS_ENVIRONMENT
+    )
+)
 
 
 def lambda_handler(event, context):
@@ -75,7 +85,12 @@ def lambda_handler(event, context):
         message.endpointName,
     )
     predictions = perform_predictions(
-        data=data.drop(["y_no", "y_yes"], axis=1).to_numpy(), predictor=predictor
+        data=data.drop(labels=["y_no", "y_yes"], axis=1).to_numpy(), predictor=predictor
+    )
+
+    # Upload csv to output bucket for training
+    model_evaluation_output_bucket_name = get_parameter_store_value(
+        name=ssm_model_evaluation_output_bucket_name
     )
 
     # Create confusion matrix to see how well the model predicted vs. actuals.
@@ -87,7 +102,7 @@ def lambda_handler(event, context):
         colnames=["predictions"],
     ).to_markdown(
         buf="s3://{bucket_name}/{today}/predictions/{endpoint_name}/PREDICTIONS.md".format(
-            bucket_name=message.testDataS3BucketName,
+            bucket_name=model_evaluation_output_bucket_name,
             today=str(datetime.now().strftime("%Y-%m-%d")),
             endpoint_name=message.endpointName,
         ),
@@ -134,7 +149,9 @@ def wait_endpoint_status_in_service(
     return describe_endpoint_response["EndpointStatus"]
 
 
-def perform_predictions(data: np.ndarray, predictor: Predictor, rows=500) -> np.ndarray:
+def perform_predictions(
+    data: np.ndarray, predictor: Predictor, rows: int = 500
+) -> np.ndarray:
     """
     Use test dataset and split into mini-batches of rows, converting these batches
     into CSV string payloads, dropping the target variable from the dataset first.
@@ -153,3 +170,17 @@ def perform_predictions(data: np.ndarray, predictor: Predictor, rows=500) -> np.
         predictions = ",".join([predictions, predictor.predict(array).decode("utf-8")])
 
     return np.fromstring(predictions[1:], sep=",")
+
+
+def get_parameter_store_value(
+    name: str, client: Any = boto3.client(service_name="ssm", region_name=aws_region)
+) -> str:
+    """
+    Get a parameter store value from AWS.
+
+    :param name: The name or Amazon Resource Name (ARN) of the parameter that you want to query
+    :param client: boto3 client configured to use ssm
+    :return: value
+    """
+    logger.info("Retrieving %s from parameter store", name)
+    return client.get_parameter(Name=name, WithDecryption=True)["Parameter"]["Value"]
