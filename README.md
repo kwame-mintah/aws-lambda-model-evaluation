@@ -36,6 +36,16 @@ graph LR
   T4-->E0
 ```
 
+# Notice
+
+An assumption has been made that a serverless endpoint has been created for inference. And not able to make of
+[`DataCaptureConfig`](https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-data-capture-endpoint.html), this is
+because the configuration is not supported for serverless endpoint(s) and will have to rely on CloudWatch logs as per
+official [documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints-monitoring.html).
+
+A workaround is to invoke the endpoint and create a confusion matrix with the predicated vs actuals, this is then uploaded
+to another bucket as in markdown format.
+
 ## Development
 
 ### Dependencies
@@ -48,20 +58,22 @@ graph LR
 
 1. Build the docker image locally:
 
-   ```commandline
+   ```shell
    docker build --no-cache -t aws_lambda:local .
    ```
 
 2. Run the docker image built:
 
-   ```commandline
+   ```shell
    docker run --platform linux/amd64 -p 9000:8080 aws_lambda:local
    ```
 
 3. Send an event to the lambda via curl:
-   ```commandline
-   curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{<REPLACE_WITH_JSON_BELOW>}'
+   ```shell
+   curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{<EXPAND_BELOW_AND_REPLACE_WITH_JSON_BELOW>}'
    ```
+   <details>
+   <summary>Example AWS SQS event received</summary>
    ```json
     {
       "Records": [
@@ -84,6 +96,7 @@ graph LR
       ]
     }
    ```
+   </details>
 
 ## GitHub Action (CI/CD)
 
