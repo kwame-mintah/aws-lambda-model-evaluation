@@ -26,14 +26,16 @@ graph LR
   T1(Check endpoint is available)
   T2(Configure Predictor for endpoint)
   T3(Pull test dataset from S3 Bucket)
-  T4(Use test data as payload for invoking endpoint)
+  T4(Use test data as payload to invoke endpoint)
+  T5(Save confusion matrix to S3 Bucket)
   E0(End)
 
   S0-->T1
   T1-->T2
   T2-->T3
   T3-->T4
-  T4-->E0
+  T4-->T5
+  T5-->E0
 ```
 
 # Notice
@@ -44,7 +46,7 @@ because the configuration is not supported for serverless endpoint(s) and will h
 official [documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints-monitoring.html).
 
 A workaround is to invoke the endpoint and create a confusion matrix with the predicated vs actuals, this is then uploaded
-to another bucket as in markdown format.
+to another bucket as in Markdown format.
 
 ## Development
 
