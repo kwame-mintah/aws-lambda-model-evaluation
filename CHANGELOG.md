@@ -1,3 +1,9 @@
+## 0.7.0 (2024-08-30)
+
+### Feat
+
+- **calculate_confusion_matrix_metrics**: find quantitative evaluation metrics for confusion matrix
+
 ## 0.6.0 (2024-08-01)
 
 ### Feat
