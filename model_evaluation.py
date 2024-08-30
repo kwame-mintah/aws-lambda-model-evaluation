@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Tuple
 
 import boto3
 import numpy as np
@@ -94,13 +94,27 @@ def lambda_handler(event, context):
     )
 
     # Create confusion matrix to see how well the model predicted vs. actuals.
-    # Then save to S3 bucket to be reviewed later.
-    pd.crosstab(
+    prediction_confusion_matrix = pd.crosstab(
         index=data["y_yes"],
         columns=np.round(predictions),
         rownames=["actuals"],
         colnames=["predictions"],
-    ).to_markdown(
+    )
+
+    # predictions   0.0  1.0
+    # actuals
+    # 0.0          3583   53
+    # 1.0           382  101
+
+    calculate_confusion_matrix_metrics(
+        true_positive=prediction_confusion_matrix[0][0],
+        true_negative=prediction_confusion_matrix[1][1],
+        false_positive=prediction_confusion_matrix[1][0],
+        false_negative=prediction_confusion_matrix[0][1],
+    )
+
+    # Then save to S3 bucket to be reviewed later as markdown.
+    prediction_confusion_matrix.to_markdown(
         buf="s3://{bucket_name}/{today}/predictions/{endpoint_name}/PREDICTIONS.md".format(
             bucket_name=model_evaluation_output_bucket_name,
             today=str(datetime.now().strftime("%Y-%m-%d")),
@@ -184,3 +198,35 @@ def get_parameter_store_value(
     """
     logger.info("Retrieving %s from parameter store", name)
     return client.get_parameter(Name=name, WithDecryption=True)["Parameter"]["Value"]
+
+
+def calculate_confusion_matrix_metrics(
+    true_positive: int, true_negative: int, false_positive: int, false_negative: int
+) -> tuple[float, float, float, float, float]:
+    """
+    Calculate quantitative evaluation metrics against machine learning model.
+
+    :param true_positive: positive class being classified correctly.
+    :param true_negative: negative class being classified correctly.
+    :param false_positive: negative class but being classified wrongly as belonging to the positive class.
+    :param false_negative: positive class but being classified wrongly as belonging to the negative class.
+    :return: calculated accuracy, precision, recall, f1_score, specificity
+    """
+    accuracy = (true_negative + true_negative) / (
+        true_positive + false_positive + true_negative + false_negative
+    )
+    precision = true_positive / (true_positive + false_positive)
+    recall = true_positive / (true_positive + false_negative)
+    f1_score = 2 * (precision * recall) / (precision + recall)
+    specificity = true_negative / (false_positive + true_negative)
+
+    logger.info(
+        "Model confusion metrics scores, accuracy: %s, precision: %s, recall: %s, F1 score: %s and "
+        "specificity: %s",
+        accuracy,
+        precision,
+        recall,
+        f1_score,
+        specificity,
+    )
+    return accuracy, precision, recall, f1_score, specificity
